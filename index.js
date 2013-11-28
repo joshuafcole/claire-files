@@ -5,17 +5,13 @@ var path = require('path');
 var findit = require('findit');
 var fuzzy = require('fuzzy');
 
+var util = require('./lib/util');
 
 var claire = module.exports = {
   defaultFilters: ['.git', 'node_modules']
 };
 
-function expandPath(p) {
-  if(p[0] === '~') {
-    p = getUserHome() + p.slice(1);
-  }
-  return path.normalize(p);
-}
+
 
 function getRoot(term, opts) {
   var root = '/';
@@ -37,7 +33,7 @@ function getRoot(term, opts) {
     }
     root = tryPath;
   }
-  root = normalizePath(root);
+  root = util.normalizePath(root);
   return root;
 }
 
@@ -50,26 +46,11 @@ function getRelativeTerm(term, root) {
 }
 
 function shorten(term, match, opts) {
-  var i = 0;
-  var cutoff = 0;
-
-  var dir = match.dir;
-  while(i < dir.length) {
-    if(dir[i] !== term[i]) {
-      break;
-    }
-
-    if(term[i] === '/') {
-      cutoff = i + 1;
-    }
-    i++;
-  }
-  if(i === dir.length) {
-    cutoff = i;
-  }
-  match.dir = dir.slice(cutoff);
-  match.shared = dir.slice(0, cutoff);
   var matchOpts = {pre: opts.pre, post: opts.post};
+
+  match.shared = util.getUnion(term, match.dir);
+  var cutoff = match.shared.lastIndexOf('/');
+  match.dir = match.dir.slice(cutoff);
   var filepath = path.join(match.dir, match.file);
   term = getRelativeTerm(term, match.shared);
 
@@ -79,19 +60,10 @@ function shorten(term, match, opts) {
   }
 }
 
-function normalizePath(path) {
-  if(path && path[path.length - 1] != '/') {
-    path += '/';
-  }
-  return path;
-}
 
-function getUserHome() {
-  return process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-}
 
 claire.find = function(term, callback, opts) {
-  term = expandPath(term);
+  term = util.expandPath(term);
   opts = opts || {};
   var skipDirs = opts.filters || claire.defaultFilters;
   var matches = [];
@@ -108,7 +80,7 @@ claire.find = function(term, callback, opts) {
 
     var match = fuzzy.match(term, dir, matchOpts);
     if(match) {
-      match.dir = normalizePath(dir);
+      match.dir = util.normalizePath(dir);
       match.file = '';
       matches.push(match);
     }
@@ -143,8 +115,8 @@ claire.find = function(term, callback, opts) {
       }
 
       // Normalize directories.
-      match.dir = normalizePath(match.dir);
-      match.shared = normalizePath(match.shared);
+      match.dir = util.normalizePath(match.dir);
+      match.shared = util.normalizePath(match.shared);
     });
 
     callback(err, matches);
