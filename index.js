@@ -11,8 +11,9 @@ var claire = module.exports = {
   defaultFilters: ['.git', 'node_modules']
 };
 
-
-
+/*\
+|*| Infer the search root experimentally.
+\*/
 function getRoot(term, opts) {
   var root = '/';
   var parts = term.split(path.sep);
@@ -37,6 +38,9 @@ function getRoot(term, opts) {
   return root;
 }
 
+/*\
+|*| Calculate the relative search term based on the given root.
+\*/
 function getRelativeTerm(term, root) {
   term = term.slice(root.length);
   if(term[term.length - 1] === '/') {
@@ -45,6 +49,9 @@ function getRelativeTerm(term, root) {
   return _.str.trim(term, '/');
 }
 
+/*\
+|*| Shorten directories of matches by pulling out the root.
+\*/
 function shorten(term, match, opts) {
   var matchOpts = {pre: opts.pre, post: opts.post};
 
@@ -60,8 +67,10 @@ function shorten(term, match, opts) {
   }
 }
 
-
-
+/*\
+|*| Where the magic happens. Search depth currently limited to 1 directory at a time.
+|*| Intended to be called repeatedly as the user refines her search.
+\*/
 claire.find = function(term, callback, opts) {
   term = util.expandPath(term);
   opts = opts || {};
