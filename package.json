@@ -1,0 +1,29 @@
+{
+  "name": "claire-file",
+  "version": "0.0.0",
+  "description": "A Fuzzy File Finder.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/joshuafcole/claire-file"
+  },
+  "keywords": [
+    "claire",
+    "fuzzy",
+    "file",
+    "find"
+  ],
+  "author": "Joshua M. Cole",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/joshuafcole/claire-file/issues"
+  },
+  "dependencies": {
+    "fuzzy": "~0.1.0",
+    "underscore": "~1.5.2",
+    "findit": "~1.1.0"
+  }
+}
