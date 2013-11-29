@@ -11,15 +11,19 @@ var claire = module.exports = {
   defaultFilters: ['.git', 'node_modules']
 };
 
+claire.getUnion = util.getUnion;
+claire.expandPath = util.expandPath;
+
 /*\
-|*| Infer the search root experimentally.
+|*| Infer the search root experimentally, leaving at least the last slash
+|*| as a search term.
 \*/
 function getRoot(term, opts) {
-  var root = '/';
   var parts = term.split(path.sep);
-  parts.shift();
+  var root = parts.shift() || '/'; // Windows support, I hope?
 
-  for(var i = 0; i < parts.length; i++) {
+  // Last section treated as term if not suffixed by '/'
+  for(var i = 0; i < parts.length - 1; i++) {
     var tryPath = path.join(root, parts[i]);
     try {
       var stat = fs.statSync(tryPath);
@@ -37,6 +41,7 @@ function getRoot(term, opts) {
   root = util.normalizePath(root);
   return root;
 }
+claire.getRoot = getRoot;
 
 /*\
 |*| Calculate the relative search term based on the given root.
@@ -48,16 +53,18 @@ function getRelativeTerm(term, root) {
   }
   return _.str.trim(term, '/');
 }
+claire.getRelativeTerm = getRelativeTerm;
 
 /*\
 |*| Shorten directories of matches by pulling out the root.
 \*/
 function shorten(term, match, opts) {
   var matchOpts = {pre: opts.pre, post: opts.post};
-
-  match.shared = util.getUnion(term, match.dir);
-  var cutoff = match.shared.lastIndexOf('/');
+  var shared = util.getUnion(term, match.dir);
+  var cutoff = shared.lastIndexOf('/') + 1;
   match.dir = match.dir.slice(cutoff);
+  match.shared = shared.slice(0, cutoff);
+
   var filepath = path.join(match.dir, match.file);
   term = getRelativeTerm(term, match.shared);
 
@@ -71,17 +78,17 @@ function shorten(term, match, opts) {
 |*| Where the magic happens. Search depth currently limited to 1 directory at a time.
 |*| Intended to be called repeatedly as the user refines her search.
 \*/
-claire.find = function(term, callback, opts) {
+function find(term, callback, opts) {
   term = util.expandPath(term);
   opts = opts || {};
   var skipDirs = opts.filters || claire.defaultFilters;
   var matches = [];
 
   var root = getRoot(term, opts);
-  //term = getRelativeTerm(term, root);
   var finder = findit(root);
   var matchOpts = {pre: opts.pre, post: opts.post};
 
+  var searchDepth = getRelativeTerm(term, root).split(path.sep).length;
   finder.on('directory', function(dir, stat, stop) {
     if(_.contains(skipDirs, path.basename(dir))) {
       return stop();
@@ -89,13 +96,16 @@ claire.find = function(term, callback, opts) {
 
     var match = fuzzy.match(term, dir, matchOpts);
     if(match) {
-      match.dir = util.normalizePath(dir);
+      match.dir = dir;
       match.file = '';
       matches.push(match);
     }
 
     // Depth 0 only
-    if(dir !== root) {
+    var relative = dir.slice(root.length);
+    var currentDepth = (relative) ? relative.split(path.sep).length : 0;
+    console.log('s', searchDepth, 'c', currentDepth, dir.slice(root.length));
+    if(currentDepth >= searchDepth) {
       return stop();
     }
   });
@@ -118,18 +128,19 @@ claire.find = function(term, callback, opts) {
     });
 
     _.each(matches, function(match) {
+      match.dir = util.normalizePath(match.dir);
       // Slice off shared path between search term and directory.
       if(opts.short) {
         shorten(term, match, opts);
       }
 
       // Normalize directories.
-      match.dir = util.normalizePath(match.dir);
-      match.shared = util.normalizePath(match.shared);
+      // match.shared = util.normalizePath(match.shared);
     });
 
     callback(err, matches);
   });
-};
+}
+claire.find = find;
 
 module.exports = claire;
