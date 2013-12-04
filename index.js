@@ -8,7 +8,7 @@ var fuzzy = require('fuzzy');
 var util = require('./lib/util');
 
 var claire = module.exports = {
-  defaultFilters: ['.git', 'node_modules']
+  defaultFilters: ['.git']
 };
 
 claire.getUnion = util.getUnion;
