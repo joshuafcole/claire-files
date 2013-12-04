@@ -1,14 +1,14 @@
 {
-  "name": "claire-file",
-  "version": "0.0.0",
-  "description": "A Fuzzy File Finder.",
+  "name": "claire-files",
+  "version": "0.0.1",
+  "description": "A claire-voyant fuzzy file finder.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/joshuafcole/claire-file"
+    "url": "http://github.com/joshuafcole/claire-files"
   },
   "keywords": [
     "claire",
@@ -23,8 +23,8 @@
   },
   "dependencies": {
     "fuzzy": "~0.1.0",
-    "underscore": "~1.5.2",
     "findit": "~1.1.0",
+    "underscore": "~1.5.2",
     "underscore.string": "~2.3.3"
   }
 }
