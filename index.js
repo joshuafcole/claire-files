@@ -15,8 +15,7 @@ claire.getUnion = util.getUnion;
 claire.expandPath = util.expandPath;
 
 /*\
-|*| Infer the search root experimentally, leaving at least the last slash
-|*| as a search term.
+|*| Infers the search root experimentally.
 \*/
 function getRoot(term, opts) {
   var parts = term.split(path.sep);
@@ -44,19 +43,16 @@ function getRoot(term, opts) {
 claire.getRoot = getRoot;
 
 /*\
-|*| Calculate the relative search term based on the given root.
+|*| Calculates the relative search term based on the given root.
 \*/
 function getRelativeTerm(term, root) {
   term = term.slice(root.length);
-  if(term[term.length - 1] === '/') {
-    term = term.slice(0, term.length - 1);
-  }
-  return _.str.trim(term, '/');
+  return _.str.trim(term, path.sep);
 }
 claire.getRelativeTerm = getRelativeTerm;
 
 /*\
-|*| Shorten directories of matches by pulling out the root.
+|*| Shortens directories of matches by rendering relative to the search root.
 \*/
 function shorten(term, match, opts) {
   var matchOpts = {pre: opts.pre, post: opts.post};
@@ -75,8 +71,10 @@ function shorten(term, match, opts) {
 }
 
 /*\
-|*| Where the magic happens. Search depth currently limited to 1 directory at a time.
-|*| Intended to be called repeatedly as the user refines her search.
+|*| Finds and scores all matches for the given search term.
+|*| opts:
+|*|   short:boolean = false // Render matches relative to search root instead of absolute.
+|*|   pre/post:any = undefined // Passed through to the fuzzy module, wraps matching characters when rendering matches.
 \*/
 function find(term, callback, opts) {
   term = util.expandPath(term);
@@ -88,7 +86,7 @@ function find(term, callback, opts) {
   var finder = findit(root);
   var matchOpts = {pre: opts.pre, post: opts.post};
 
-  var searchDepth = getRelativeTerm(term, root).split(path.sep).length;
+  var searchDepth = util.getPathDepth(getRelativeTerm(term, root));
   finder.on('directory', function(dir, stat, stop) {
     if(_.contains(skipDirs, path.basename(dir))) {
       return stop();
@@ -101,10 +99,9 @@ function find(term, callback, opts) {
       matches.push(match);
     }
 
-    // Depth 0 only
     var relative = dir.slice(root.length);
-    var currentDepth = (relative) ? relative.split(path.sep).length : 0;
-    console.log('s', searchDepth, 'c', currentDepth, dir.slice(root.length));
+    var currentDepth = (relative) ? util.getPathDepth(relative) : 0;
+
     if(currentDepth >= searchDepth) {
       return stop();
     }
@@ -133,9 +130,6 @@ function find(term, callback, opts) {
       if(opts.short) {
         shorten(term, match, opts);
       }
-
-      // Normalize directories.
-      // match.shared = util.normalizePath(match.shared);
     });
 
     callback(err, matches);
