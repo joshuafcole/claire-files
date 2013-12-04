@@ -1,4 +1,4 @@
-# Claire (-voyant)
+# Claire (-voyant) Files Backend
 Claire is a fuzzy file finder heavily inspired by Emacs' [ido-mode](http://www.emacswiki.org/emacs/InteractivelyDoThings).
 It implements a subset of the features ido-mode provides, with a few extra touches.
 
