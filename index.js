@@ -19,9 +19,9 @@ claire.expandPath = util.expandPath;
 \*/
 function getRoot(term, opts) {
   var parts = term.split(path.sep);
-  var root = parts.shift() || '/'; // Windows support, I hope?
+  var root = parts.shift() || path.sep; // Windows support, I hope?
 
-  // Last section treated as term if not suffixed by '/'
+  // Last section treated as term if not suffixed by path separator.
   for(var i = 0; i < parts.length - 1; i++) {
     var tryPath = path.join(root, parts[i]);
     try {
@@ -57,7 +57,7 @@ claire.getRelativeTerm = getRelativeTerm;
 function shorten(term, match, opts) {
   var matchOpts = {pre: opts.pre, post: opts.post};
   var shared = util.getUnion(term, match.dir);
-  var cutoff = shared.lastIndexOf('/') + 1;
+  var cutoff = shared.lastIndexOf(path.sep) + 1;
   match.dir = match.dir.slice(cutoff);
   match.shared = shared.slice(0, cutoff);
 
